@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101f38" />
+    <title>ATTENZA — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .home-shell {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .home-main {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 28px;
+        }
+
+        .home-topbar,
+        .home-top-row {
+            flex: 0 0 auto;
+        }
+
+        /* ── Two-column panel layout ── */
+        .admin-columns {
+            flex: 1 1 0;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 960px) {
+            .admin-columns {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+        }
+
+        /* ── Shared card chrome ── */
+        .admin-card {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        /* Sign-in card: navy accent */
+        .card-signin {
+            border: 1.5px solid #c4cdec;
+        }
+
+        .card-signin .card-header {
+            background: #10203a;
+            color: #f7f3e9;
+        }
+
+        .card-signin .card-header .card-icon {
+            background: #c9e5d9;
+            color: #10203a;
+        }
+
+        .card-signin .card-header .card-count {
+            background: rgba(201, 229, 217, .18);
+            color: #c9e5d9;
+            border: 1px solid rgba(201, 229, 217, .3);
+        }
+
+        /* Leave card: warm amber accent */
+        .card-leave {
+            border: 1.5px solid #e4cb95;
+        }
+
+        .card-leave .card-header {
+            background: #3a2a10;
+            color: #fdf6e8;
+        }
+
+        .card-leave .card-header .card-icon {
+            background: #f0c96a;
+            color: #3a2a10;
+        }
+
+        .card-leave .card-header .card-count {
+            background: rgba(240, 201, 106, .15);
+            color: #f0c96a;
+            border: 1px solid rgba(240, 201, 106, .3);
+        }
+
+        .card-header {
+            flex: 0 0 auto;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .card-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+        }
+
+        .card-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .card-header-text {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .card-title {
+            font: 700 13px Manrope, sans-serif;
+            letter-spacing: .1px;
+            margin: 0 0 2px;
+        }
+
+        .card-subtitle {
+            font: 500 10px "DM Mono", monospace;
+            letter-spacing: .8px;
+            opacity: .6;
+            margin: 0;
+        }
+
+        .card-count {
+            flex: 0 0 auto;
+            font: 700 20px "Space Grotesk", sans-serif;
+            padding: 6px 14px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+
+        /* ── Table area ── */
+        .card-body {
+            flex: 1 1 0;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        /* Sticky column headers */
+        .table-head {
+            flex: 0 0 auto;
+            display: grid;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--line);
+            background: #f6f4ef;
+        }
+
+        .card-signin .table-head {
+            grid-template-columns: 1fr 1fr auto auto;
+        }
+
+        .card-leave .table-head {
+            grid-template-columns: 1fr auto auto auto;
+        }
+
+        .th {
+            padding: 9px 8px;
+            font: 500 9px "DM Mono", monospace;
+            letter-spacing: 1px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .th:last-child {
+            text-align: right;
+        }
+
+        /* Invisible scrollbar on the table body */
+        .table-body {
+            flex: 1 1 0;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .table-body::-webkit-scrollbar {
+            display: none;
+            /* Chrome/Safari */
+        }
+
+        /* ── Request rows ── */
+        .req-row {
+            display: grid;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--line);
+            align-items: center;
+            min-height: 60px;
+        }
+
+        .card-signin .req-row {
+            grid-template-columns: 1fr 1fr auto auto;
+        }
+
+        .card-leave .req-row {
+            grid-template-columns: 1fr auto auto auto;
+        }
+
+        .req-row:last-child {
+            border-bottom: 0;
+        }
+
+        .req-row:hover {
+            background: #fafaf9;
+        }
+
+        .cell {
+            padding: 10px 8px;
+            font-size: 12px;
+            color: var(--ink);
+        }
+
+        .cell-main {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .cell-sub {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .cell-badge {
+            display: inline-block;
+            font: 500 9px "DM Mono", monospace;
+            letter-spacing: .7px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        .badge-navy {
+            background: #eef1fb;
+            color: #5866b0;
+            border: 1px solid #c4cdec;
+        }
+
+        .badge-amber {
+            background: #fbf3e2;
+            color: #b8863a;
+            border: 1px solid #e4cb95;
+        }
+
+        .badge-coral {
+            background: #fdeee9;
+            color: #d97a5f;
+            border: 1px solid #f4c9bb;
+        }
+
+        /* ── Action buttons in rows ── */
+        .cell-actions {
+            padding: 10px 8px;
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .btn-approve,
+        .btn-decline {
+            padding: 6px 12px;
+            font: 700 9px Manrope, sans-serif;
+            letter-spacing: .5px;
+            border: 1px solid;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity .15s;
+        }
+
+        .btn-approve:disabled,
+        .btn-decline:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        .btn-approve {
+            background: #e6f5ec;
+            border-color: #7fbd9a;
+            color: #2e7d53;
+        }
+
+        .btn-approve:hover:not(:disabled) {
+            background: #7fbd9a;
+            color: #fff;
+        }
+
+        .btn-decline {
+            background: #fdeee9;
+            border-color: #e79684;
+            color: #c1554a;
+        }
+
+        .btn-decline:hover:not(:disabled) {
+            background: #e79684;
+            color: #fff;
+        }
+
+        /* ── Empty / loading state ── */
+        .empty-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            text-align: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .empty-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+        }
+
+        .card-signin .empty-icon {
+            background: #eef1fb;
+            color: #5866b0;
+        }
+
+        .card-leave .empty-icon {
+            background: #fbf3e2;
+            color: #b8863a;
+        }
+
+        .empty-label {
+            font: 700 13px Manrope, sans-serif;
+            color: var(--ink);
+            margin: 0;
+        }
+
+        .empty-sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin: 0;
+            max-width: 220px;
+            line-height: 1.6;
+        }
+
+        /* Reason text inside leave rows */
+        .reason-text {
+            font-size: 11px;
+            color: var(--ink);
+            margin-top: 4px;
+            display: block;
+            opacity: .8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="home-shell">
+        <aside class="sidebar" aria-label="Main navigation">
+            <a class="sidebar-logo" href="home.html" title="ATTENZA Home">
+                <span class="emblem-letter">A</span>
+            </a>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="home.html">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 11.5 12 4l9 7.5" />
+                        <path d="M5.5 10v9.5h13V10" />
+                        <path d="M9.5 19.5V13.5h5v6" />
+                    </svg>
+                    <span>HOME</span>
+                </a>
+                <a class="sidebar-link" href="history.html">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 7v5l3.3 2" />
+                    </svg>
+                    <span>HISTORY</span>
+                </a>
+                <a class="sidebar-link" href="leave.html">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="3.5" y="5" width="17" height="15" rx="1.5" />
+                        <path d="M3.5 9.5h17" />
+                        <path d="M8 3v4M16 3v4" />
+                        <path d="M8.5 13.5l2 2 4-4" />
+                    </svg>
+                    <span>LEAVE</span>
+                </a>
+                <a class="sidebar-link active" href="admin.html" aria-current="page">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span>ADMIN</span>
+                </a>
+            </nav>
+            <div class="sidebar-foot">
+                <button class="sidebar-link" id="signOut" type="button" title="Sign out">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 4H5.5a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 5.5 20H9" />
+                        <path d="M16 16.5 21 12l-5-4.5" />
+                        <path d="M21 12H9" />
+                    </svg>
+                    <span>SIGN OUT</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="home-main">
+            <div class="home-topbar">
+                <span class="date-chip" id="today"></span>
+                <span class="secure"><b>●</b> SECURE SESSION</span>
+            </div>
+
+            <div class="home-top-row">
+                <div class="home-greeting">
+                    <p class="step-label">ADMIN</p>
+                    <h1>Requests.</h1>
+                    <p id="requestCountText">Checking for pending requests…</p>
+                </div>
+            </div>
+
+            <!-- Side-by-side cards -->
+            <div class="admin-columns">
+
+                <!-- ── Sign-in requests card ── -->
+                <div class="admin-card card-signin">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                <path d="M10 17l5-5-5-5" />
+                                <path d="M15 12H3" />
+                            </svg>
+                        </div>
+                        <div class="card-header-text">
+                            <p class="card-title">Sign-in Requests</p>
+                            <p class="card-subtitle">BRANCH OVERRIDE · PENDING APPROVAL</p>
+                        </div>
+                        <span class="card-count" id="signinCount">—</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-head">
+                            <span class="th">EMPLOYEE</span>
+                            <span class="th">BRANCH</span>
+                            <span class="th">DISTANCE</span>
+                            <span class="th" style="text-align:right">ACTIONS</span>
+                        </div>
+                        <div class="table-body" id="requestList">
+                            <div class="empty-row">
+                                <div class="empty-icon">↻</div>
+                                <p class="empty-label">Loading…</p>
+                                <p class="empty-sub">Checking for sign-in requests that need your approval.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Leave requests card ── -->
+                <div class="admin-card card-leave">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3.5" y="5" width="17" height="15" rx="1.5" />
+                                <path d="M3.5 9.5h17" />
+                                <path d="M8 3v4M16 3v4" />
+                                <path d="M8.5 13.5l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <div class="card-header-text">
+                            <p class="card-title">Leave Requests</p>
+                            <p class="card-subtitle">YOUR BRANCH · PENDING APPROVAL</p>
+                        </div>
+                        <span class="card-count" id="leaveCount">—</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-head">
+                            <span class="th">EMPLOYEE · TYPE</span>
+                            <span class="th">DATES</span>
+                            <span class="th">DAYS</span>
+                            <span class="th" style="text-align:right">ACTIONS</span>
+                        </div>
+                        <div class="table-body" id="leaveRequestList">
+                            <div class="empty-row">
+                                <div class="empty-icon">↻</div>
+                                <p class="empty-label">Loading…</p>
+                                <p class="empty-sub">Checking for leave requests that need your approval.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="signout-overlay" id="signoutOverlay" aria-hidden="true">
+        <div class="signout-modal">
+            <div class="spinner-wrapper">
+                <div class="spinner-wheel"></div>
+                <div class="spinner-icon">
+                    <span class="emblem-letter">A</span>
+                </div>
+            </div>
+            <p class="signout-label">Signing Out</p>
+            <p class="signout-text">Closing session & saving attendance safely…</p>
+        </div>
+    </div>
+
+    <script src="soundfx.js"></script>
+    <script src="admin.js"></script>
+    <script>
+        /* ─────────────────────────────────────────────────────────────────
+           Rendering overrides — re-implement renderRequests() and
+           renderLeaveRequests() to use the new table-row markup.
+           These declarations come AFTER admin.js so they shadow the
+           functions defined there.
+        ───────────────────────────────────────────────────────────────── */
+
+        /* Override renderRequests */
+        renderRequests = function (requests) {
+            const countEl = document.getElementById('signinCount');
+            const listEl = document.getElementById('requestList');
+            const descEl = document.getElementById('requestCountText');
+
+            if (countEl) countEl.textContent = requests.length || '0';
+            if (descEl) descEl.textContent = requests.length
+                ? `${requests.length} sign-in override${requests.length === 1 ? '' : 's'} waiting for your decision.`
+                : 'No pending sign-in requests right now.';
+
+            if (!requests.length) {
+                listEl.innerHTML = `
+                <div class="empty-row">
+                    <div class="empty-icon">✓</div>
+                    <p class="empty-label">All caught up</p>
+                    <p class="empty-sub">No branch sign-in requests are waiting for approval.</p>
+                </div>`;
+                return;
+            }
+
+            listEl.innerHTML = requests.map(req => `
+            <div class="req-row">
+                <div class="cell">
+                    <span class="cell-main">${req.employee}</span>
+                    <span class="cell-sub">${req.assignedBranch || 'Assigned branch'}</span>
+                </div>
+                <div class="cell">
+                    <span class="cell-badge badge-navy">${req.requestedBranch}</span>
+                </div>
+                <div class="cell">
+                    <span style="font:600 12px 'DM Mono',monospace;color:var(--ink)">${req.distanceMeters}m</span>
+                    ${req.accuracyMeters ? `<span class="cell-sub">GPS ±${Math.round(req.accuracyMeters)}m</span>` : ''}
+                </div>
+                <div class="cell-actions">
+                    <button class="btn-decline" type="button" data-id="${req.requestId}" data-decision="Reject" ${busyRequestId === req.requestId ? 'disabled' : ''}>DECLINE</button>
+                    <button class="btn-approve" type="button" data-id="${req.requestId}" data-decision="Approve" ${busyRequestId === req.requestId ? 'disabled' : ''}>APPROVE</button>
+                </div>
+            </div>`).join('');
+
+            listEl.querySelectorAll('.btn-approve, .btn-decline').forEach(btn => {
+                btn.addEventListener('click', () => reviewRequest(btn.dataset.id, btn.dataset.decision));
+            });
+        };
+
+        /* Override renderLeaveRequests */
+        renderLeaveRequests = function (requests) {
+            const countEl = document.getElementById('leaveCount');
+            const listEl = document.getElementById('leaveRequestList');
+            const descEl = document.getElementById('leaveRequestCountText');
+
+            if (countEl) countEl.textContent = requests.length || '0';
+            if (descEl) descEl.textContent = requests.length
+                ? `${requests.length} leave request${requests.length === 1 ? '' : 's'} waiting for your decision.`
+                : 'No pending leave requests right now.';
+
+            if (!requests.length) {
+                listEl.innerHTML = `
+                <div class="empty-row">
+                    <div class="empty-icon">✓</div>
+                    <p class="empty-label">All caught up</p>
+                    <p class="empty-sub">No leave requests from your branch are waiting for approval.</p>
+                </div>`;
+                return;
+            }
+
+            // Inline helpers (safe to re-declare here — same logic as admin.js)
+            const toDateOnly = v => { if (!v) return ''; const m = String(v).match(/^\d{4}-\d{2}-\d{2}/); return m ? m[0] : ''; };
+            const fmtLeaveDate = v => {
+                const d0 = toDateOnly(v); if (!d0) return '—';
+                const d = new Date(d0 + 'T00:00:00'); if (isNaN(d.getTime())) return String(v);
+                return `${String(d.getDate()).padStart(2, '0')} ${new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(d)}`;
+            };
+            const leaveDayCount = (f, t) => {
+                const f0 = toDateOnly(f), t0 = toDateOnly(t); if (!f0 || !t0) return 0;
+                const n = Math.round((new Date(t0 + 'T00:00:00') - new Date(f0 + 'T00:00:00')) / 86400000) + 1;
+                return n > 0 ? n : 0;
+            };
+
+            listEl.innerHTML = requests.map(req => {
+                const days = leaveDayCount(req.fromDate, req.toDate);
+                return `
+            <div class="req-row">
+                <div class="cell">
+                    <span class="cell-main">${req.employee}</span>
+                    <span class="cell-badge badge-amber" style="margin-top:4px;display:inline-block">${req.leaveType || 'Leave'}</span>
+                    ${req.reason ? `<span class="reason-text">${req.reason}</span>` : ''}
+                </div>
+                <div class="cell">
+                    <span style="font:600 11px 'DM Mono',monospace;color:var(--ink)">${fmtLeaveDate(req.fromDate)}</span>
+                    <span class="cell-sub">${fmtLeaveDate(req.toDate)}</span>
+                </div>
+                <div class="cell">
+                    <span class="cell-badge badge-coral">${days}d</span>
+                </div>
+                <div class="cell-actions">
+                    <button class="btn-decline" type="button" data-id="${req.leaveId}" data-decision="Reject" ${busyLeaveId === req.leaveId ? 'disabled' : ''}>DECLINE</button>
+                    <button class="btn-approve" type="button" data-id="${req.leaveId}" data-decision="Approve" ${busyLeaveId === req.leaveId ? 'disabled' : ''}>APPROVE</button>
+                </div>
+            </div>`;
+            }).join('');
+
+            listEl.querySelectorAll('.btn-approve, .btn-decline').forEach(btn => {
+                btn.addEventListener('click', () => reviewLeaveRequest(btn.dataset.id, btn.dataset.decision));
+            });
+        };
+    </script>
+</body>
+
+</html>
