@@ -92,6 +92,8 @@
                     </div>
                     <button class="signin-btn" id="requestApprovalBtn" type="button" disabled><span>Request approval
                             from admin</span><span class="arrow">→</span></button>
+                    <button class="qr-link" id="openBranchQr" type="button">Using a desktop? Scan QR to verify from
+                        your phone <span>→</span></button>
                     <p class="password-status" id="branchRequestStatus"></p>
                 </div>
                 <button class="qr-link" id="openQr" type="button">Using a desktop? Scan office QR instead
@@ -117,9 +119,9 @@
         <header><span class="date-chip" id="mobileToday"></span><span class="secure"><b>●</b> SECURE SIGN-IN</span>
         </header>
         <div class="form-wrap">
-            <div class="step-label">QR CHECK-IN</div>
+            <div class="step-label" id="mobileStepLabel">QR CHECK-IN</div>
             <h2 id="mobileTitle">Confirm it's<br>you.</h2>
-            <p class="intro">Signing in as <strong id="mobileEmployeeName"></strong> at <strong
+            <p class="intro" id="mobileIntro">Signing in as <strong id="mobileEmployeeName"></strong> at <strong
                     id="mobileBranchName"></strong>.</p>
             <div class="location-card" id="mobileLocationCard">
                 <div class="location-icon">⌖</div>
