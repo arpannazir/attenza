@@ -36,12 +36,15 @@ function saveSignInAndRedirect(payload, delay = 1100) {
 }
 
 // ---- Are we the phone that just scanned a desktop's QR code? ----
+// mode=request means this QR came from the "not at your branch?" block —
+// the phone should file an approval request, not sign straight in.
 const qp = new URLSearchParams(window.location.search);
 const qrEmployeeParam = qp.get('employee'), qrBranchParam = qp.get('branch'), qrSessionParam = qp.get('qrsession');
+const qrModeParam = qp.get('mode') === 'request' ? 'request' : 'signin';
 const isMobileQrFlow = !!(qrEmployeeParam && qrBranchParam && qrSessionParam);
 
 if (isMobileQrFlow) {
-    runMobileConfirmFlow(qrEmployeeParam, qrBranchParam, qrSessionParam);
+    runMobileConfirmFlow(qrEmployeeParam, qrBranchParam, qrSessionParam, qrModeParam);
 } else {
     runDesktopFlow();
 }
@@ -225,22 +228,22 @@ function runDesktopFlow() {
 }
 
 // ---- Desktop side: generate a QR code that a phone scans ----
+// Two triggers share this one modal: "openQr" (normal sign-in, at the
+// employee's assigned branch) and "openBranchQr" (the "not at your
+// branch?" block — the phone files an approval request instead of
+// signing straight in). currentMode tracks which one is active so the
+// poller knows which endpoint and outcome to expect.
 function initQrModal() {
-    const qrModal = $('qrModal'), openQrBtn = $('openQr'), closeQrBtn = $('closeQr'), qrCodeCanvas = $('qrCodeCanvas'), qrStatus = $('qrStatus');
-    let qrCodeWidget = null, pollTimer = null, currentSession = null;
+    const qrModal = $('qrModal'), openQrBtn = $('openQr'), openBranchQrBtn = $('openBranchQr'),
+        closeQrBtn = $('closeQr'), qrCodeCanvas = $('qrCodeCanvas'), qrStatus = $('qrStatus');
+    let qrCodeWidget = null, pollTimer = null, currentSession = null, currentMode = 'signin';
 
     function makeSessionId() {
         if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
         return 'qr-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
     }
 
-    function openQrModal() {
-        const e = selectedEmployee();
-        if (!e) return showToast('Please select your profile first.');
-        const name = field(e, ['name', 'Employee Name']), branch = field(e, ['branch', 'Branch']);
-        currentSession = makeSessionId();
-        const url = `${location.origin}${location.pathname}?employee=${encodeURIComponent(name)}&branch=${encodeURIComponent(branch)}&qrsession=${encodeURIComponent(currentSession)}`;
-
+    function renderQr(url) {
         qrCodeCanvas.innerHTML = '';
         if (typeof QRCode !== 'undefined') {
             qrCodeWidget = new QRCode(qrCodeCanvas, { text: url, width: 190, height: 190, correctLevel: QRCode.CorrectLevel.M });
@@ -249,10 +252,33 @@ function initQrModal() {
         }
         qrStatus.textContent = 'Waiting for you to scan…';
         qrStatus.className = 'qr-status';
-
         qrModal.classList.add('open');
         qrModal.setAttribute('aria-hidden', 'false');
         startPolling();
+    }
+
+    // Normal sign-in QR: phone checks its GPS against the employee's
+    // ASSIGNED branch and signs straight in once verified.
+    function openQrModal() {
+        const e = selectedEmployee();
+        if (!e) return showToast('Please select your profile first.');
+        const name = field(e, ['name', 'Employee Name']), branch = field(e, ['branch', 'Branch']);
+        currentMode = 'signin';
+        currentSession = makeSessionId();
+        renderQr(`${location.origin}${location.pathname}?employee=${encodeURIComponent(name)}&branch=${encodeURIComponent(branch)}&qrsession=${encodeURIComponent(currentSession)}`);
+    }
+
+    // Branch-request QR: phone checks its GPS against the branch the
+    // employee PICKED (not their assigned one) and files an approval
+    // request instead of signing straight in.
+    function openBranchQrModal() {
+        const e = selectedEmployee();
+        if (!e) return showToast('Please select your profile first.');
+        if (!branchSelect.value) return showToast('Pick a branch above first.');
+        const name = field(e, ['name', 'Employee Name']), branch = branchSelect.value;
+        currentMode = 'request';
+        currentSession = makeSessionId();
+        renderQr(`${location.origin}${location.pathname}?employee=${encodeURIComponent(name)}&branch=${encodeURIComponent(branch)}&qrsession=${encodeURIComponent(currentSession)}&mode=request`);
     }
 
     function closeQrModal() {
@@ -261,25 +287,54 @@ function initQrModal() {
         qrModal.setAttribute('aria-hidden', 'true');
     }
 
+    async function pollSignIn() {
+        const r = await fetch(`${API_URL}?action=checkSession&session=${encodeURIComponent(currentSession)}`);
+        const result = await r.json();
+        if (result && result.ok && result.found) {
+            qrStatus.textContent = `Signed in as ${result.employee} ✓`;
+            qrStatus.className = 'qr-status found';
+            stopPolling();
+            saveSignInAndRedirect({ employee: result.employee, branch: result.branch, signedInAt: result.time, qrSession: currentSession, role: result.role }, 1400);
+        }
+    }
+
+    async function pollBranchRequest() {
+        const r = await fetch(`${API_URL}?action=checkBranchSession&session=${encodeURIComponent(currentSession)}`);
+        const result = await r.json();
+        if (!(result && result.ok && result.found)) return; // phone hasn't submitted the request yet
+        if (result.status === 'Approved') {
+            qrStatus.textContent = `Approved ✓ Signing in as ${result.employee}…`;
+            qrStatus.className = 'qr-status found';
+            stopPolling();
+            saveSignInAndRedirect({
+                employee: result.employee, branch: result.branch,
+                distance: result.distanceMeters, accuracy: result.accuracyMeters,
+                signedInAt: result.reviewedAt, role: verifiedRole, viaApproval: true
+            }, 1400);
+        } else if (result.status === 'Rejected') {
+            qrStatus.textContent = 'Your admin declined this request.';
+            qrStatus.className = 'qr-status error';
+            stopPolling();
+        } else {
+            qrStatus.textContent = `Request sent as ${result.employee} — waiting for admin approval…`;
+            qrStatus.className = 'qr-status';
+        }
+    }
+
     function startPolling() {
         stopPolling();
         pollTimer = setInterval(async () => {
             if (!currentSession) return;
             try {
-                const r = await fetch(`${API_URL}?action=checkSession&session=${encodeURIComponent(currentSession)}`);
-                const result = await r.json();
-                if (result && result.ok && result.found) {
-                    qrStatus.textContent = `Signed in as ${result.employee} ✓`;
-                    qrStatus.className = 'qr-status found';
-                    stopPolling();
-                    saveSignInAndRedirect({ employee: result.employee, branch: result.branch, signedInAt: result.time, qrSession: currentSession, role: result.role }, 1400);
-                }
+                if (currentMode === 'request') await pollBranchRequest();
+                else await pollSignIn();
             } catch (_) {/* keep polling silently */ }
         }, 3000);
     }
     function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null } }
 
     openQrBtn.addEventListener('click', openQrModal);
+    if (openBranchQrBtn) openBranchQrBtn.addEventListener('click', openBranchQrModal);
     closeQrBtn.addEventListener('click', closeQrModal);
     qrModal.addEventListener('click', e => { if (e.target === qrModal) closeQrModal() });
 }
@@ -415,7 +470,11 @@ function pollRequestStatus(requestId, employeeName, branch, distance, accuracy) 
 }
 
 // ---- Phone side: the page that opens after scanning the QR ----
-function runMobileConfirmFlow(employeeName, branch, qrSession) {
+// mode === 'request' means this scan came from the "not at your branch?"
+// block: the phone still checks its own GPS, but files an approval
+// request instead of signing straight in — same on-site guarantee, just a
+// different branch than the one the employee is assigned to.
+function runMobileConfirmFlow(employeeName, branch, qrSession, mode = 'signin') {
     document.querySelector('.app-shell').style.display = 'none';
     const screen = $('mobileConfirm');
     screen.hidden = false;
@@ -426,6 +485,13 @@ function runMobileConfirmFlow(employeeName, branch, qrSession) {
 
     const btn = $('mobileSignIn'), titleEl = $('mobileLocationTitle'), textEl = $('mobileLocationText'), cardEl = $('mobileLocationCard');
     function setMobileLocation(title, text, state = '') { titleEl.textContent = title; textEl.textContent = text; cardEl.className = `location-card ${state}` }
+
+    if (mode === 'request') {
+        $('mobileStepLabel').textContent = 'QR BRANCH REQUEST';
+        $('mobileTitle').innerHTML = 'Confirm it\u2019s<br>you.';
+        $('mobileIntro').innerHTML = `Requesting sign-in as <strong>${employeeName}</strong> at <strong>${branch}</strong> \u2014 outside your assigned branch. Your admin will need to approve this.`;
+        btn.querySelector('span').textContent = 'Verify location & request approval';
+    }
 
     async function findOffice() {
         try {
@@ -451,6 +517,28 @@ function runMobileConfirmFlow(employeeName, branch, qrSession) {
             const meters = distanceMeters(pos.coords.latitude, pos.coords.longitude, Number(field(office, ['latitude', 'Latitude'])), Number(field(office, ['longitude', 'Longitude'])));
             if (accuracy > 200) { btn.disabled = false; return setMobileLocation('GPS signal is not precise enough', `Current accuracy is ±${accuracy}m. Turn on Precise location, then try again.`, 'error') }
             if (meters > MAX_DISTANCE_METERS) { btn.disabled = false; return setMobileLocation('Outside sign-in area', `GPS says ${Math.round(meters)}m from ${branch} (accuracy ±${accuracy}m).`, 'error') }
+
+            if (mode === 'request') {
+                setMobileLocation('Sending your request…', `${Math.round(meters)}m from ${branch} · GPS accuracy ±${accuracy}m`, 'ready');
+                const payload = { action: 'requestBranchSignIn', employee: employeeName, requestedBranch: branch, latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, qrSession: qrSession };
+                try {
+                    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+                    const result = await r.json();
+                    if (result && result.ok) {
+                        setMobileLocation('Request sent ✓', `${Math.round(meters)}m from ${branch} · Check the desktop screen for your admin's decision.`, 'ready');
+                        btn.querySelector('span').textContent = 'Request sent';
+                        // Mobile stays here — it was only used to verify location.
+                        // The desktop (polling checkBranchSession) tracks approval and moves on to home.html.
+                    } else {
+                        btn.disabled = false;
+                        setMobileLocation('Request failed', (result && result.message) || 'Please try again.', 'error');
+                    }
+                } catch (_) {
+                    btn.disabled = false;
+                    setMobileLocation('Could not reach the attendance sheet', 'Check your connection and try again.', 'error');
+                }
+                return;
+            }
 
             setMobileLocation('Signing you in…', `${Math.round(meters)}m from ${branch} · GPS accuracy ±${accuracy}m`, 'ready');
             const payload = { action: 'signIn', employee: employeeName, branch: branch, latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, qrSession: qrSession, signedInAt: new Date().toISOString() };
