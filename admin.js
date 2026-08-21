@@ -66,18 +66,36 @@ function fmtShortDate(value) {
 }
 
 function fmtLeaveTime(value) {
-    if (!value) return '';
-    const m = String(value).match(/^(\d{2}):(\d{2})/);
-    if (m) {
-        const d = new Date();
-        d.setHours(Number(m[1]), Number(m[2]), 0, 0);
-        return new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+    if (!value || value === '—' || value === '-') return '';
+    const str = String(value).trim().replace(/^'+/, '');
+    if (!str) return '';
+
+    // 12-hour format with AM/PM (e.g. "09:54 pm", "9:54 PM")
+    const m12 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([aApP][mM])$/i);
+    if (m12) {
+        const hh = String(m12[1]).padStart(2, '0');
+        const mm = m12[2];
+        const ampm = m12[3].toUpperCase();
+        return `${hh}:${mm} ${ampm}`;
     }
-    const iso = new Date(value);
-    if (!isNaN(iso.getTime())) {
-        return new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }).format(iso);
+
+    // 24-hour format (e.g. "14:30" or "09:54")
+    const m24 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (m24) {
+        const h = parseInt(m24[1], 10);
+        const mm = m24[2];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${mm} ${ampm}`;
     }
-    return String(value);
+
+    // ISO timestamp or Date string
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+        return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).format(d);
+    }
+
+    return str;
 }
 
 function leaveDayCount(fromStr, toStr) {
@@ -282,16 +300,25 @@ function renderLeaveRequests(requests) {
 
     listEl.innerHTML = requests.map(req => {
         const days = leaveDayCount(req.fromDate, req.toDate);
+        const timeFormatted = fmtLeaveTime(req.leaveTime);
+        const timeBadge = timeFormatted
+            ? `<span class="cell-badge badge-navy" style="font-size:10.5px;padding:2px 7px;border-radius:2px;background:#eef1fb;color:#3b4895;border:1px solid #c4cdec;font-weight:700;letter-spacing:.4px">🕒 LEAVING: ${timeFormatted}</span>`
+            : '';
+
         return `
         <div class="req-row">
             <div class="cell">
                 <span class="cell-main">${req.employee}</span>
-                <span class="cell-badge badge-amber" style="margin-top:4px;display:inline-block">${req.leaveType || 'Leave'}</span>
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:4px">
+                    <span class="cell-badge badge-amber">${req.leaveType || 'Leave'}</span>
+                    ${timeBadge}
+                </div>
                 ${req.reason ? `<span class="reason-text">${req.reason}</span>` : ''}
             </div>
             <div class="cell">
                 <span style="font:600 11px 'DM Mono',monospace;color:var(--ink)">${fmtLeaveDate(req.fromDate)}</span>
                 <span class="cell-sub">${fmtLeaveDate(req.toDate)}</span>
+                ${timeFormatted ? `<span style="font:700 10.5px 'DM Mono',monospace;color:#3b4895;display:block;margin-top:2px">Time: ${timeFormatted}</span>` : ''}
             </div>
             <div class="cell">
                 <span class="cell-badge badge-coral">${days}d</span>
@@ -955,4 +982,4 @@ if (isAdmin) {
             loadLeaveRequests();
         }
     }, 5000);
-}
+}
