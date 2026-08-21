@@ -49,10 +49,36 @@ function startOfMonth(date) {
 }
 
 function fmtTime(isoString) {
-    if (!isoString) return '—';
+    if (!isoString || isoString === '—' || isoString === '-') return '—';
+    const str = String(isoString).trim();
+    if (!str) return '—';
+
+    // 12-hour format with AM/PM (e.g. "09:54 pm", "9:54 PM")
+    const m12 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([aApP][mM])$/i);
+    if (m12) {
+        const hh = String(m12[1]).padStart(2, '0');
+        const mm = m12[2];
+        const ampm = m12[3].toUpperCase();
+        return `${hh}:${mm} ${ampm}`;
+    }
+
+    // 24-hour format (e.g. "21:54" or "09:54")
+    const m24 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (m24) {
+        const h = parseInt(m24[1], 10);
+        const mm = m24[2];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${mm} ${ampm}`;
+    }
+
     try {
-        return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(isoString));
-    } catch (_) { return '—'; }
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).format(d);
+        }
+    } catch (_) { }
+    return str;
 }
 
 function fmtDuration(ms) {
@@ -168,15 +194,60 @@ async function loadHistory() {
     }
 }
 
+/**
+ * Parse an event time string (which may be just "hh:mm a" / "HH:mm" with
+ * no date component) into a full Date using the event's date string.
+ * Falls back to ISO parsing if the value already contains a date portion.
+ *
+ * @param {string} dateStr - 'YYYY-MM-DD'
+ * @param {string} timeStr - raw time from server, e.g. "09:54 pm", "21:54", ISO
+ * @returns {Date}
+ */
+function parseEventTime(dateStr, timeStr) {
+    if (!timeStr || !dateStr) return new Date(NaN);
+    const str = String(timeStr).trim();
+
+    // Already a full ISO / date-time string — use directly.
+    if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    // 12-hour "hh:mm am/pm" (e.g. "09:54 pm", "9:54 PM")
+    const m12 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([aApP][mM])$/i);
+    if (m12) {
+        let h = parseInt(m12[1], 10);
+        const min = parseInt(m12[2], 10);
+        const ampm = m12[3].toLowerCase();
+        if (ampm === 'am' && h === 12) h = 0;
+        if (ampm === 'pm' && h !== 12) h += 12;
+        return new Date(`${dateStr}T${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`);
+    }
+
+    // 24-hour "HH:mm" or "HH:mm:ss"
+    const m24 = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m24) {
+        const h = String(m24[1]).padStart(2, '0');
+        const min = String(m24[2]).padStart(2, '0');
+        const sec = String(m24[3] || '00').padStart(2, '0');
+        return new Date(`${dateStr}T${h}:${min}:${sec}`);
+    }
+
+    // Last resort
+    return new Date(str);
+}
+
 /* ── Build dayMap from flat events list ── */
 function buildDayMap() {
     dayMap = {};
 
-    // Sort chronologically just in case.
-    const sorted = [...allEvents].sort((a, b) => new Date(a.time) - new Date(b.time));
+    // Sort chronologically using robust date+time parsing.
+    const sorted = [...allEvents].sort((a, b) =>
+        parseEventTime(a.date, a.time) - parseEventTime(b.date, b.time)
+    );
 
     // Walk through events, pairing Sign In / Sign Out rows into sessions.
-    const pending = {}; // employeeDay → open sign-in event (we only care about one employee here)
+    const pending = {}; // date → open sign-in event (we only care about one employee here)
 
     sorted.forEach(ev => {
         const d = ev.date; // 'YYYY-MM-DD'
@@ -189,7 +260,9 @@ function buildDayMap() {
             pending[d] = ev;
         } else if (isOut && pending[d]) {
             const inEv = pending[d];
-            const ms = Math.max(0, new Date(ev.time) - new Date(inEv.time));
+            const inTime = parseEventTime(inEv.date, inEv.time);
+            const outTime = parseEventTime(ev.date, ev.time);
+            const ms = Math.max(0, outTime - inTime);
             dayMap[d].sessions.push({
                 in: inEv.time,
                 out: ev.time,
@@ -207,11 +280,12 @@ function buildDayMap() {
     // Any still-open sessions (no sign-out yet, i.e. today's active session).
     Object.keys(pending).forEach(d => {
         const inEv = pending[d];
-        const ms = Math.max(0, Date.now() - new Date(inEv.time));
+        const inTime = parseEventTime(inEv.date, inEv.time);
+        const ms = Math.max(0, Date.now() - inTime);
         if (!dayMap[d]) dayMap[d] = { sessions: [], totalMs: 0 };
         dayMap[d].sessions.push({
             in: inEv.time,
-            out: null,             // still open
+            out: null,          // still open
             durationMs: ms,
             branch: inEv.branch,
             type: inEv.type,
