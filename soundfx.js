@@ -143,9 +143,9 @@ const SoundFx = (() => {
 
             const voices = window.speechSynthesis.getVoices();
             if (voices && voices.length > 0) {
-                const preferred = voices.find(v => 
-                    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || 
-                     v.name.includes('David') || v.name.includes('Zira') || v.name.includes('Jenny')) && 
+                const preferred = voices.find(v =>
+                    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') ||
+                        v.name.includes('David') || v.name.includes('Zira') || v.name.includes('Jenny')) &&
                     v.lang.startsWith('en')
                 );
                 if (preferred) utter.voice = preferred;
