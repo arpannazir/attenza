@@ -80,6 +80,39 @@ function fmtLeaveTime(value) {
     return String(value);
 }
 
+function fmtAttendanceTime(value) {
+    if (!value || value === '—' || value === '-') return '—';
+    const str = String(value).trim();
+    if (!str) return '—';
+
+    // 12-hour format with AM/PM (e.g. "09:54 pm", "9:54 PM")
+    const m12 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([aApP][mM])$/i);
+    if (m12) {
+        const hh = String(m12[1]).padStart(2, '0');
+        const mm = m12[2];
+        const ampm = m12[3].toUpperCase();
+        return `${hh}:${mm} ${ampm}`;
+    }
+
+    // 24-hour format (e.g. "21:54" or "09:54")
+    const m24 = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (m24) {
+        const h = parseInt(m24[1], 10);
+        const mm = m24[2];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${mm} ${ampm}`;
+    }
+
+    // Full Date / ISO timestamp
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+        return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).format(d);
+    }
+
+    return str;
+}
+
 function leaveDayCount(fromStr, toStr) {
     const fromOnly = toDateOnly(fromStr), toOnly = toDateOnly(toStr);
     if (!fromOnly || !toOnly) return 0;
@@ -736,6 +769,17 @@ function renderAttendanceTab(attList) {
             statusBadge = '<span class="cell-badge badge-coral">REJECTED</span>';
         }
 
+        const timeDisplay = fmtAttendanceTime(a.time);
+        const hasDist = a.distance !== null && a.distance !== undefined && a.distance !== '' && !isNaN(Number(a.distance));
+        const distNum = hasDist ? Math.round(Number(a.distance)) : null;
+        const hasAcc = a.accuracy !== null && a.accuracy !== undefined && a.accuracy !== '' && !isNaN(Number(a.accuracy));
+        const accNum = hasAcc ? Math.round(Number(a.accuracy)) : null;
+
+        const isSignOut = typeStr.toLowerCase().includes('out');
+        const typeBadge = isSignOut
+            ? `<span class="chip-signout">${typeStr}</span>`
+            : `<span class="chip-signin">${typeStr}</span>`;
+
         return `
         <tr>
             <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${idx + 1}</td>
@@ -744,11 +788,11 @@ function renderAttendanceTab(attList) {
             </td>
             <td><span class="chip-branch">${a.branch || '—'}</span></td>
             <td style="font-family:'DM Mono',monospace;font-size:11px">${fmtShortDate(a.date)}</td>
-            <td style="font-family:'DM Mono',monospace;font-weight:600">${a.time || '—'}</td>
-            <td><span class="cell-badge badge-navy">${typeStr}</span></td>
+            <td style="font-family:'DM Mono',monospace;font-weight:600;color:var(--ink)">${timeDisplay}</td>
+            <td>${typeBadge}</td>
             <td style="font-family:'DM Mono',monospace;font-size:11px">
-                ${a.distance !== null && a.distance !== undefined ? `${Math.round(a.distance)}m` : '—'}
-                ${a.accuracy ? `<span style="font-size:10px;color:var(--muted)"> (±${Math.round(a.accuracy)}m)</span>` : ''}
+                ${distNum !== null ? `${distNum}m` : '—'}
+                ${accNum !== null ? `<span style="font-size:10px;color:var(--muted)"> (±${accNum}m)</span>` : ''}
             </td>
             <td>${statusBadge}</td>
         </tr>`;
@@ -1138,9 +1182,10 @@ $('btnExportExcel').addEventListener('click', () => {
         'Employee Name': a.employee,
         'Branch': a.branch,
         'Date': a.date,
-        'Time': a.time,
+        'Time': fmtAttendanceTime(a.time),
         'Type': a.type,
-        'Distance (m)': a.distance || '',
+        'Distance (m)': (a.distance !== null && a.distance !== undefined && a.distance !== '' && !isNaN(Number(a.distance))) ? Math.round(Number(a.distance)) : '',
+        'Accuracy (m)': (a.accuracy !== null && a.accuracy !== undefined && a.accuracy !== '' && !isNaN(Number(a.accuracy))) ? Math.round(Number(a.accuracy)) : '',
         'Status': a.status
     }));
     const wsAtt = XLSX.utils.json_to_sheet(attData);
