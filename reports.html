@@ -271,41 +271,86 @@
             background: #eef1fb;
             border-color: #c4cdec;
         }
-        .kpi-card.c-workforce::before { background: #4a57a8; }
-        .kpi-card.c-workforce .k-label { color: #4a57a8; }
-        .kpi-card.c-workforce .k-value { color: #3b4895; }
+
+        .kpi-card.c-workforce::before {
+            background: #4a57a8;
+        }
+
+        .kpi-card.c-workforce .k-label {
+            color: #4a57a8;
+        }
+
+        .kpi-card.c-workforce .k-value {
+            color: #3b4895;
+        }
 
         .kpi-card.c-attendance {
             background: #e6f7ef;
             border-color: #a4debe;
         }
-        .kpi-card.c-attendance::before { background: #288c5a; }
-        .kpi-card.c-attendance .k-label { color: #288c5a; }
-        .kpi-card.c-attendance .k-value { color: #1e6e45; }
+
+        .kpi-card.c-attendance::before {
+            background: #288c5a;
+        }
+
+        .kpi-card.c-attendance .k-label {
+            color: #288c5a;
+        }
+
+        .kpi-card.c-attendance .k-value {
+            color: #1e6e45;
+        }
 
         .kpi-card.c-leaves {
             background: #fdf4e3;
             border-color: #e8c97a;
         }
-        .kpi-card.c-leaves::before { background: #b8863a; }
-        .kpi-card.c-leaves .k-label { color: #9c6c24; }
-        .kpi-card.c-leaves .k-value { color: #875715; }
+
+        .kpi-card.c-leaves::before {
+            background: #b8863a;
+        }
+
+        .kpi-card.c-leaves .k-label {
+            color: #9c6c24;
+        }
+
+        .kpi-card.c-leaves .k-value {
+            color: #875715;
+        }
 
         .kpi-card.c-pending {
             background: #fff0eb;
             border-color: #f0b49a;
         }
-        .kpi-card.c-pending::before { background: #c1554a; }
-        .kpi-card.c-pending .k-label { color: #b84c40; }
-        .kpi-card.c-pending .k-value { color: #9c362b; }
+
+        .kpi-card.c-pending::before {
+            background: #c1554a;
+        }
+
+        .kpi-card.c-pending .k-label {
+            color: #b84c40;
+        }
+
+        .kpi-card.c-pending .k-value {
+            color: #9c362b;
+        }
 
         .kpi-card.c-quota {
             background: #f0eef8;
             border-color: #b8b0de;
         }
-        .kpi-card.c-quota::before { background: #6a5fa0; }
-        .kpi-card.c-quota .k-label { color: #584c94; }
-        .kpi-card.c-quota .k-value { color: #473a85; }
+
+        .kpi-card.c-quota::before {
+            background: #6a5fa0;
+        }
+
+        .kpi-card.c-quota .k-label {
+            color: #584c94;
+        }
+
+        .kpi-card.c-quota .k-value {
+            color: #473a85;
+        }
 
         .k-label {
             font: 700 8.5px "DM Mono", monospace;
@@ -403,13 +448,47 @@
             white-space: nowrap;
         }
 
-        /* ── Scrollable Tab Panels ── */
+        /* ── Scrollable Tab Panels & Invisible Scrollbars ── */
         .stab-panel {
             flex: 1 1 0;
             min-height: 0;
             overflow: auto;
             display: flex;
             flex-direction: column;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .stab-panel::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+            width: 0;
+            height: 0;
+        }
+
+        /* Hide scrollbars everywhere in smart reports while keeping smooth scrolling */
+        .smart-content-hub,
+        .smart-tab-bar,
+        .smart-tabs,
+        .branch-cards-grid,
+        .insights-container,
+        .smart-table,
+        table,
+        tbody {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .smart-content-hub::-webkit-scrollbar,
+        .smart-tab-bar::-webkit-scrollbar,
+        .smart-tabs::-webkit-scrollbar,
+        .branch-cards-grid::-webkit-scrollbar,
+        .insights-container::-webkit-scrollbar,
+        .smart-table::-webkit-scrollbar,
+        table::-webkit-scrollbar,
+        tbody::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         .stab-panel[hidden] {
@@ -427,29 +506,26 @@
         .smart-table th {
             position: sticky;
             top: 0;
-            background: #f8f9fb;
-            padding: 10px 12px;
-            font: 700 9px "DM Mono", monospace;
-            letter-spacing: .9px;
-            color: var(--muted);
-            border-bottom: 1px solid var(--line);
+            background: #10203a;
+            padding: 11px 12px;
+            font: 700 9.5px "DM Mono", monospace;
+            letter-spacing: 1px;
+            color: #f7f3e9;
+            border-bottom: 2px solid #091322;
             white-space: nowrap;
-            z-index: 2;
+            z-index: 5;
+            text-transform: uppercase;
         }
 
         .smart-table td {
             padding: 10px 12px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #10203a;
             color: var(--ink);
             vertical-align: middle;
         }
 
         .smart-table tr:hover td {
-            background: #fafafc;
-        }
-
-        .smart-table tr:last-child td {
-            border-bottom: none;
+            background: #f0f4fa;
         }
 
         /* Branch Comparison Grid (Tab 1) */
@@ -542,10 +618,52 @@
             border-radius: 2px;
             letter-spacing: .4px;
         }
-        .chip-medical { background: #eef1fb; color: #3b4895; border: 1px solid #c4cdec; }
-        .chip-personal { background: #e8f5ee; color: #2e7a56; border: 1px solid #96ccb0; }
-        .chip-halfday { background: #fdf4e3; color: #8c5d1e; border: 1px solid #e8c97a; }
-        .chip-early { background: #f0eef8; color: #55498f; border: 1px solid #b8b0de; }
+
+        .chip-medical {
+            background: #eef1fb;
+            color: #3b4895;
+            border: 1px solid #c4cdec;
+        }
+
+        .chip-personal {
+            background: #e8f5ee;
+            color: #2e7a56;
+            border: 1px solid #96ccb0;
+        }
+
+        .chip-halfday {
+            background: #fdf4e3;
+            color: #8c5d1e;
+            border: 1px solid #e8c97a;
+        }
+
+        .chip-early {
+            background: #f0eef8;
+            color: #55498f;
+            border: 1px solid #b8b0de;
+        }
+
+        .chip-signin {
+            display: inline-block;
+            font: 700 9.5px "DM Mono", monospace;
+            background: #e6f5ec;
+            color: #15803d;
+            border: 1px solid #7fbd9a;
+            padding: 2.5px 8px;
+            border-radius: 3px;
+            letter-spacing: .5px;
+        }
+
+        .chip-signout {
+            display: inline-block;
+            font: 700 9.5px "DM Mono", monospace;
+            background: #fdeee9;
+            color: #b91c1c;
+            border: 1px solid #f4c9bb;
+            padding: 2.5px 8px;
+            border-radius: 3px;
+            letter-spacing: .5px;
+        }
 
         .badge-balance-good {
             background: #e6f5ec;
@@ -677,10 +795,19 @@
         }
 
         @media print {
-            .sidebar, .home-topbar, .smart-filter-bar, .smart-tab-bar, .smart-action-btn {
+
+            .sidebar,
+            .home-topbar,
+            .smart-filter-bar,
+            .smart-tab-bar,
+            .smart-action-btn {
                 display: none !important;
             }
-            .home-shell, .home-main, .smart-content-hub, .stab-panel {
+
+            .home-shell,
+            .home-main,
+            .smart-content-hub,
+            .stab-panel {
                 height: auto !important;
                 overflow: visible !important;
             }
@@ -721,7 +848,8 @@
                     <span>LEAVE</span>
                 </a>
                 <!-- New SMART REPORTS item -->
-                <a class="sidebar-link active" href="reports.html" aria-current="page" title="Smart Reports & All Branches">
+                <a class="sidebar-link active" href="reports.html" aria-current="page"
+                    title="Smart Reports & All Branches">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M21 21H3V3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         <path d="M7 14l4-4 4 4 5-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -760,7 +888,8 @@
                 <div class="home-greeting">
                     <p class="step-label" id="smartStepLabel">SMART ANALYTICS</p>
                     <h1 id="smartMainTitle">Smart Reports.</h1>
-                    <p id="smartSubtitle">Real-time intelligence, branch comparison, workforce attendance & leave balances.</p>
+                    <p id="smartSubtitle">Real-time intelligence, branch comparison, workforce attendance & leave
+                        balances.</p>
                 </div>
 
                 <div class="smart-header-actions">
@@ -769,24 +898,33 @@
                         <option value="all">ALL BRANCHES</option>
                     </select>
 
-                    <button class="smart-action-btn btn-excel" id="btnExportExcel" type="button" title="Export multi-sheet Excel report">
+                    <button class="smart-action-btn btn-excel" id="btnExportExcel" type="button"
+                        title="Export multi-sheet Excel report">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
                             <rect x="2" y="3" width="14" height="18" rx="1.5" fill="#1D6F42" />
-                            <path d="M4.6 7.5h2.15l1.55 2.55 1.55-2.55h2.15L9.6 12l2.55 4.5h-2.2l-1.6-2.75-1.6 2.75H4.5L7.1 12 4.6 7.5Z" fill="#fff" />
-                            <path d="M14 6h6.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H14v-3h5.5v-1.5H14v-1.5h5.5V10H14V8.5h5.5V7H14V6Z" fill="#1D6F42" />
+                            <path
+                                d="M4.6 7.5h2.15l1.55 2.55 1.55-2.55h2.15L9.6 12l2.55 4.5h-2.2l-1.6-2.75-1.6 2.75H4.5L7.1 12 4.6 7.5Z"
+                                fill="#fff" />
+                            <path
+                                d="M14 6h6.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H14v-3h5.5v-1.5H14v-1.5h5.5V10H14V8.5h5.5V7H14V6Z"
+                                fill="#1D6F42" />
                         </svg>
                         <span>EXCEL</span>
                     </button>
 
                     <button class="smart-action-btn" id="btnPrintReport" type="button" title="Print this report">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" />
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" />
                         </svg>
                         <span>PRINT</span>
                     </button>
 
-                    <button class="smart-action-btn btn-refresh" id="btnRefreshData" type="button" title="Refresh live data">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="smart-action-btn btn-refresh" id="btnRefreshData" type="button"
+                        title="Refresh live data">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M23 4v6h-6M1 20v-6h6" />
                             <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
                         </svg>
@@ -831,7 +969,8 @@
                             <option value="pending">Pending</option>
                             <option value="rejected">Rejected</option>
                         </select>
-                        <input type="search" class="filter-search-input" id="filterSearch" placeholder="Search staff, branch, reason…" />
+                        <input type="search" class="filter-search-input" id="filterSearch"
+                            placeholder="Search staff, branch, reason…" />
                     </div>
                 </div>
             </div>
@@ -869,7 +1008,8 @@
             <div class="smart-content-hub">
                 <div class="smart-tab-bar">
                     <div class="smart-tabs" role="tablist">
-                        <button class="stab-btn active" id="tabBtnBranches" type="button" role="tab" aria-selected="true">
+                        <button class="stab-btn active" id="tabBtnBranches" type="button" role="tab"
+                            aria-selected="true">
                             <span>BRANCH COMPARISON & OVERVIEW</span>
                             <span class="stab-badge" id="tabBadgeBranches">0</span>
                         </button>
