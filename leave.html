@@ -491,6 +491,18 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            border-top: 3px solid #10203a;
+            background: #fafbfd;
+        }
+
+        .leave-form-panel .home-panel::-webkit-scrollbar,
+        .leave-history-panel .home-panel::-webkit-scrollbar,
+        .leave-list-scroll::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         .leave-history-panel .home-panel {
@@ -498,65 +510,121 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .leave-history-panel .home-panel h3 {
             flex: 0 0 auto;
         }
 
+        .leave-list-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* ── Form card heading ── */
+        .leave-form-panel .home-panel h3 {
+            font: 700 14px "Space Grotesk", sans-serif;
+            color: #10203a;
+            letter-spacing: -.1px;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e8ecf2;
+            text-transform: uppercase;
+        }
+
+        /* ── Field wrappers ── */
         .leave-field {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .leave-field label {
             display: block;
-            font: 600 10px "DM Mono", monospace;
-            letter-spacing: .8px;
-            color: var(--muted);
-            margin-bottom: 6px;
+            font: 700 9px "DM Mono", monospace;
+            letter-spacing: 1px;
+            color: #8394a8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
         .leave-field input[type="date"],
+        .leave-field input[type="time"],
         .leave-field select,
         .leave-field textarea {
             width: 100%;
-            border: 1px solid var(--line);
-            background: #fff;
-            padding: 10px 12px;
+            border: 1.5px solid #dde3ed;
+            background: #ffffff;
+            padding: 9px 12px;
             font: 500 13px Manrope, sans-serif;
-            color: var(--ink);
+            color: #10203a;
             box-sizing: border-box;
+            border-radius: 4px;
+            transition: border-color .15s, box-shadow .15s;
         }
 
-        .leave-field input[type="date"]:focus,
-        .leave-field select:focus,
-        .leave-field textarea:focus {
-            outline: none;
-            border-color: var(--navy);
+        .leave-field input[type="date"],
+        .leave-field input[type="time"] {
+            font: 600 12px "DM Mono", monospace;
+            color: #10203a;
+        }
+
+        .leave-field select {
+            font-weight: 600;
+            cursor: pointer;
+            color: #10203a;
         }
 
         .leave-field textarea {
             resize: vertical;
             min-height: 76px;
             font-family: Manrope, sans-serif;
+            line-height: 1.5;
         }
 
+        .leave-field input[type="date"]:focus,
+        .leave-field input[type="time"]:focus,
+        .leave-field select:focus,
+        .leave-field textarea:focus {
+            outline: none;
+            border-color: #10203a;
+            box-shadow: 0 0 0 3px rgba(16, 32, 58, 0.08);
+            background: #fff;
+        }
+
+        /* ── Date row ── */
         .leave-range-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
+        /* ── Days count note ── */
         .leave-days-note {
-            font: 500 11px "DM Mono", monospace;
-            color: var(--coral);
-            margin: -6px 0 16px;
+            font: 700 10px "DM Mono", monospace;
+            color: #c96845;
+            margin: -8px 0 14px;
+            display: block;
         }
 
+        /* ── Submit button ── */
+        .leave-form-panel .signin-btn {
+            border-radius: 4px;
+            height: 48px;
+            font-size: 12.5px;
+            letter-spacing: .4px;
+            margin-top: 4px;
+        }
+
+        /* ── Status message ── */
         .leave-submit-status {
-            font-size: 12px;
-            margin-top: 10px;
+            font: 600 11px "DM Mono", monospace;
+            margin-top: 8px;
             min-height: 16px;
+            text-align: center;
         }
 
         .leave-submit-status.error {
@@ -567,18 +635,39 @@
             color: #2e7d53;
         }
 
-        /* Leave request rows — colour-coded by status so the decision is
-           readable at a glance, not just from the small chip. */
+        /* ── "Your applications" panel ── */
+        .leave-history-panel .home-panel {
+            border-top: 3px solid #10203a;
+            background: #fafbfd;
+        }
+
+        .leave-history-panel .home-panel h3 {
+            font: 700 14px "Space Grotesk", sans-serif;
+            color: #10203a;
+            letter-spacing: -.1px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e8ecf2;
+            text-transform: uppercase;
+        }
+
+        /* ── Leave row cards ── */
         .leave-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             gap: 14px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            border: 1px solid var(--line);
-            border-left: 4px solid var(--line);
+            padding: 13px 14px;
+            margin-bottom: 8px;
+            border: 1.5px solid #e4eaf3;
+            border-left: 4px solid #b8c4d8;
             background: #fff;
+            border-radius: 4px;
+            transition: box-shadow .15s;
+        }
+
+        .leave-row:hover {
+            box-shadow: 0 2px 10px rgba(16, 32, 58, .07);
         }
 
         .leave-row:last-child {
@@ -586,91 +675,94 @@
         }
 
         .leave-row.row-pending {
-            background: #fdf8ef;
-            border-color: #f0e2bf;
-            border-left-color: #e4cb95;
+            background: #fffdf6;
+            border-color: #eddfa3;
+            border-left-color: #d4a82b;
         }
 
         .leave-row.row-approved {
-            background: #f2f9f5;
-            border-color: #cbe4d5;
-            border-left-color: #7fbd9a;
+            background: #f5fbf7;
+            border-color: #bddece;
+            border-left-color: #3a9e6a;
         }
 
         .leave-row.row-rejected {
-            background: #fdf2ef;
-            border-color: #f4d3c8;
-            border-left-color: #e79684;
+            background: #fdf4f3;
+            border-color: #f0c9c4;
+            border-left-color: #d85a50;
         }
 
+        /* ── Row text ── */
         .leave-row-main {
-            font-weight: 600;
-            font-size: 13px;
+            font: 700 13px "Space Grotesk", sans-serif;
+            color: #10203a;
+            letter-spacing: -.1px;
         }
 
         .leave-row-sub {
             display: block;
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 3px;
+            font: 500 10.5px "DM Mono", monospace;
+            color: #8394a8;
+            margin-top: 4px;
+            letter-spacing: .2px;
         }
 
         .leave-row-reason {
             display: block;
-            font-size: 12px;
-            color: var(--ink);
+            font: 500 11.5px Manrope, sans-serif;
+            color: #4a5568;
             margin-top: 6px;
+            font-style: italic;
             max-width: 480px;
         }
 
+        /* ── Status chips ── */
         .leave-status-chip {
             flex: 0 0 auto;
-            font: 600 9px "DM Mono", monospace;
-            letter-spacing: .7px;
-            padding: 4px 10px;
-            border: 1px solid var(--line);
+            font: 700 8.5px "DM Mono", monospace;
+            letter-spacing: .8px;
+            padding: 4px 9px;
+            border-radius: 3px;
             white-space: nowrap;
+            text-transform: uppercase;
         }
 
         .chip-pending {
-            background: #fbf3e2;
-            border-color: #e4cb95;
-            color: #b8863a;
+            background: #fef3c7;
+            border: 1.5px solid #d4a82b;
+            color: #92650a;
         }
 
         .chip-approved {
-            background: #e6f5ec;
-            border-color: #b9d9c6;
-            color: #2e7d53;
+            background: #dcfce7;
+            border: 1.5px solid #3a9e6a;
+            color: #166534;
         }
 
         .chip-rejected {
-            background: #fdeee9;
-            border-color: #f4c9bb;
-            color: #c1554a;
+            background: #fee2e2;
+            border: 1.5px solid #d85a50;
+            color: #991b1b;
         }
 
         .leave-list-scroll {
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
-            padding-right: 6px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .leave-list-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .leave-list-scroll::-webkit-scrollbar-thumb {
-            background: var(--line);
-            border-radius: 3px;
+            display: none;
+            width: 0;
         }
 
         .leave-empty {
             text-align: center;
-            padding: 36px 20px;
-            color: var(--muted);
-            font-size: 13px;
+            padding: 40px 20px;
+            color: #8394a8;
+            font: 500 13px Manrope, sans-serif;
         }
     </style>
 </head>
@@ -819,7 +911,7 @@
                             </select>
                         </div>
                         <div class="leave-field" id="leaveTimeField" hidden>
-                            <label for="leaveTime" id="leaveTimeLabel">TIME</label>
+                            <label for="leaveTime" id="leaveTimeLabel">LEAVING AT</label>
                             <input type="time" id="leaveTime" />
                         </div>
                         <div class="leave-field">
