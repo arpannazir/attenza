@@ -311,6 +311,7 @@ function renderLeaveRequests(requests) {
                 <span class="cell-main">${req.employee}</span>
                 <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:4px">
                     <span class="cell-badge badge-amber">${req.leaveType || 'Leave'}</span>
+                    ${req.branch ? `<span class="cell-badge badge-navy">${req.branch}</span>` : ''}
                     ${timeBadge}
                 </div>
                 ${req.reason ? `<span class="reason-text">${req.reason}</span>` : ''}
